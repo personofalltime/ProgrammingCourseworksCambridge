@@ -29,11 +29,10 @@ def calcY(theta, rm):
 def calcRd(x, y):
     return np.sqrt((x*x)+(y*y))
 
-def calculate_ratio_from_rm(rm):
+def calculate_rd_from_rm(rm):
     theta = calctheta(rm)
     rd = calcRd(calcX(theta), calcY(theta, rm))
-    ratio = (rm+(wheelspacing/2))/(rm-(wheelspacing/2))
-    return ratio
+    return rd
 
 def findcircle(triplet):
     if(len(triplet) < 3):
@@ -53,17 +52,16 @@ def calcradius(triplet):
 
     radius = np.sqrt((c**2)/(2-(2*np.cos(2*np.pi - 2*x))))
 
-    
-
     theta1 = np.acos((c)/(2*radius))
     theta2 = np.atan((triplet[-1][1]-triplet[0][1])/(triplet[-1][0]-triplet[0][0]))
 
     x = triplet[0][0] + np.cos(theta2-theta1)*radius
     y = triplet[0][1] + np.sin(theta2-theta1)*radius
 
-    return (radius, x, y)
+    return (radius, x, y, np.pi-2*theta1)
 
 def findturnthroughangle(desiredangle):
+    
     change = currentpos-desiredangle
 
     if(change < -(np.pi/2)):
@@ -73,12 +71,20 @@ def findturnthroughangle(desiredangle):
     else:
         return change
 
-def movetoangle(desiredangle):
-    #motorA.turn(power=turnpower, brake=true)
-    #motorB.turn(power=-turnpower, brake=true)
-    time.sleep((turnmultiplier*turnpower)/((findturnthroughangle(desiredangle))*(wheelspacing/2)))
-    #motorA.turn(power=0)
-    #motorB.turn(power=0)
+def movetoangle(desiredangle, left):
+    if(left):
+        #motorB.turn(power=turnpower, brake=true)
+        #motorA.turn(power=-turnpower, brake=true)
+        time.sleep((turnmultiplier*turnpower)/((findturnthroughangle(desiredangle))*(wheelspacing/2)))
+        #motorA.turn(power=0)
+        #motorB.turn(power=0)
+    else:
+        #motorA.turn(power=turnpower, brake=true)
+        #motorB.turn(power=-turnpower, brake=true)
+        time.sleep((turnmultiplier*turnpower)/((findturnthroughangle(desiredangle))*(wheelspacing/2)))
+        #motorA.turn(power=0)
+        #motorB.turn(power=0)
+
 
 def correctforquadrant(x, y):
     if(x >= 0) and (y>=0):
@@ -90,11 +96,29 @@ def correctforquadrant(x, y):
     elif(x <= 0) and (y<0):
         return np.atan(x/y) + np.pi
     
-def moveincircle(radius, x, y):
+def moveincircle(radius, x, y, angle):
 
-    movetoangle(correctforquadrant(x, y))
+    movetoangle(correctforquadrant(x, y), True if (y > 0) else False)
+    drawCircle(radius, angle, True if (y > 0) else False)
 
 
+def drawCircle(rad, angle, left):
+
+    rm = 10
+    rd = 0
+    while rd < rad:
+    
+        rd = calculate_rd_from_rm(rm)                         
+        rm = rm + 0.1
+
+    ratio = (rm+(wheelspacing/2))/(rm-(wheelspacing/2))
+
+    if(left):
+        motR.turn(turnpower)
+        motL.turn(ratio*turnpower)
+    else:
+        motR.turn(ratio*turnpower)
+        motL.turn(turnpower)
 
 
 #rm = np.linspace(0, 100, 10000)

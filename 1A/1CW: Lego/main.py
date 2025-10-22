@@ -11,8 +11,11 @@ wheelspacing = 10
 z = np.sqrt(dt*dt+dl*dl)
 phi = np.atan(dt/dl)
 
-global currentpos, turnpower, turnmultiplier
-currentpos = 0
+global currentpos, turnpower, turnmultiplier, gearratio, circumference
+currentpos = [0, 0, np.pi/2]
+gearratio = 1
+circumference = 10
+
 
 def calctheta(rm):
     theta = math.pi - np.atan(rm/dp) - np.acos(dtw/np.sqrt((rm*rm) + (dp*dp)))
@@ -78,13 +81,14 @@ def movetoangle(desiredangle, left):
         time.sleep((turnmultiplier*turnpower)/((findturnthroughangle(desiredangle))*(wheelspacing/2)))
         #motorA.turn(power=0)
         #motorB.turn(power=0)
+        currentpos[2] = desiredangle
     else:
         #motorA.turn(power=turnpower, brake=true)
         #motorB.turn(power=-turnpower, brake=true)
         time.sleep((turnmultiplier*turnpower)/((findturnthroughangle(desiredangle))*(wheelspacing/2)))
         #motorA.turn(power=0)
         #motorB.turn(power=0)
-
+        currentpos[2] = desiredangle
 
 def correctforquadrant(x, y):
     if(x >= 0) and (y>=0):
@@ -101,7 +105,6 @@ def moveincircle(radius, x, y, angle):
     movetoangle(correctforquadrant(x, y), True if (y > 0) else False)
     drawCircle(radius, angle, True if (y > 0) else False)
 
-
 def drawCircle(rad, angle, left):
 
     rm = 10
@@ -113,12 +116,14 @@ def drawCircle(rad, angle, left):
 
     ratio = (rm+(wheelspacing/2))/(rm-(wheelspacing/2))
 
+    deg = (((gearratio * (angle/np.pi) * rad)/circumference)*360)
+
     if(left):
-        motR.turn(turnpower)
-        motL.turn(ratio*turnpower)
+        motR.turn(turnpower, deg)
+        motL.turn(ratio*turnpower, deg*ratio)
     else:
-        motR.turn(ratio*turnpower)
-        motL.turn(turnpower)
+        motR.turn(ratio*turnpower, deg*ratio)
+        motL.turn(turnpower, deg)
 
 
 #rm = np.linspace(0, 100, 10000)
@@ -152,5 +157,3 @@ for i in range(0, len(allCodes)):
 print(arcSets)
 for i in arcSets:
     print(calcradius(i))
-
-[0, 1, 2, 3, 4]
